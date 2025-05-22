@@ -12,4 +12,90 @@ generator client {
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
+
+model User {
+  id           String      @id @default(cuid())
+  email        String      @unique
+  password     String
+  name         String
+  role         Role        @default(CUSTOMER)
+  restaurant   Restaurant? @relation(fields: [restaurantId], references: [id])
+  restaurantId String?
+  orders       Order[]
+  createdAt    DateTime    @default(now())
+}
+
+model Restaurant {
+  id        String    @id @default(cuid())
+  name      String
+  users     User[]
+  pizzas    Pizza[]
+  toppings  Topping[]
+  orders    Order[]
+  createdAt DateTime  @default(now())
+}
+
+model Pizza {
+  id           String         @id @default(cuid())
+  name         String
+  price        Float
+  restaurant   Restaurant     @relation(fields: [restaurantId], references: [id])
+  restaurantId String
+  toppings     PizzaTopping[]
+  orderItems   OrderItem[]
+}
+
+model Topping {
+  id           String         @id @default(cuid())
+  name         String
+  restaurant   Restaurant     @relation(fields: [restaurantId], references: [id])
+  restaurantId String
+  pizzas       PizzaTopping[]
+}
+
+model PizzaTopping {
+  id        String  @id @default(cuid())
+  pizza     Pizza   @relation(fields: [pizzaId], references: [id])
+  pizzaId   String
+  topping   Topping @relation(fields: [toppingId], references: [id])
+  toppingId String
+  @@unique([pizzaId, toppingId]) // prevent duplicate toppings
+}
+
+model Order {
+  id           String      @id @default(cuid())
+  customer     User        @relation(fields: [customerId], references: [id])
+  customerId   String
+  restaurant   Restaurant  @relation(fields: [restaurantId], references: [id])
+  restaurantId String
+  status       OrderStatus @default(PENDING)
+  items        OrderItem[]
+  createdAt    DateTime    @default(now())
+}
+
+model OrderItem {
+  id       String  @id @default(cuid())
+  order    Order   @relation(fields: [orderId], references: [id])
+  orderId  String
+  pizza    Pizza   @relation(fields: [pizzaId], references: [id])
+  pizzaId  String
+  quantity Int
+}
+
+
+
+enum Role {
+  CUSTOMER
+  MANAGER
+  SUPER_ADMIN
+}
+
+enum OrderStatus {
+  PENDING
+  IN_PROGRESS
+  DELIVERED
+  CANCELLED
+}
+
