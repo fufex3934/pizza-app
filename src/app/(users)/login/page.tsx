@@ -24,11 +24,18 @@ const Login = () => {
     e.preventDefault();
     setLoading(true);
     try {
-      const res = await fetch("/api/auth/login");
-
+      const res = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formData),
+        
+      });
+      const data = await res.json();
       if (res.ok) {
         toast.success("Logged in Successfully!");
-        router.push("/dashboard");
+router.push("/dashboard");
+      } else {
+        toast.error(data.error);
       }
     } catch (error) {
       toast.error("Some thing went wrong");
